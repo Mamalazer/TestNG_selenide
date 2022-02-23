@@ -1,13 +1,11 @@
 package com.saucedemo;
 
-import com.codeborne.selenide.SelenideElement;
 import com.saucedemo.paje_objects.LoginPage;
-import com.saucedemo.paje_objects.ProductsPage;
 import core.BaseTest;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.codeborne.selenide.Selenide.$x;
 import static com.saucedemo.Items.SAUCE_LABS_BACKPACK;
@@ -32,7 +30,7 @@ public class Tests extends BaseTest {
                 "Успешная авторизация под удалённым пользователем");
     }
 
-    @Test(description = "Добавление товара в корзину", priority = 1, testName = "Добавление товара в корзину",
+    @Test(description = "Создание заказа и проверка компонентов", priority = 1, testName = "Создание заказа",
             groups = {"Smoke"})
     public void addItemToBasket() {
         Map<String, String> itemInfo = new LoginPage()
@@ -45,6 +43,75 @@ public class Tests extends BaseTest {
 
         assertEquals(itemInfo.get("name"), SAUCE_LABS_BACKPACK.item, "Названия товаров не совпадают");
         assertEquals(itemInfo.get("price"), SAUCE_LABS_BACKPACK.price, "Цены товаров не совпадают");
+    }
+
+    @Test(description = "Проверка сортировки товаров по алфавиту", priority = 2, testName = "Сортировка товаров по алфавиту")
+    public void sortAscendingOrder() {
+        List<String> actualOrder = new LoginPage()
+                .login(LOGIN, PASSWORD)
+                .sortProducts(0)
+                .getProductAttributes("names");
+
+        List<String> ascOrder = actualOrder
+                .stream()
+                .sorted()
+                .collect(Collectors.toList());
+
+        assertEquals(actualOrder, ascOrder, "Товары не отсортированы в алфавитном порядке");
+    }
+
+    @Test(description = "Проверка сортировки товаров по алфавиту в обратном порядке", priority = 2,
+            testName = "Обратная сортировка товаров по алфавиту")
+    public void sortDescendingOrder() {
+        List<String> actualOrder = new LoginPage()
+                .login(LOGIN, PASSWORD)
+                .sortProducts(1)
+                .getProductAttributes("names");
+
+        List<String> descOrder = actualOrder
+                .stream()
+                .sorted(Comparator.reverseOrder())
+                .collect(Collectors.toList());
+
+        assertEquals(actualOrder, descOrder, "Товары не отсортированы в обратном алфавитном порядке");
+    }
+
+    @Test(description = "Проверка сортировки товаров по цене", priority = 2,
+            testName = "Сортировка товаров по цене")
+    public void sortPriceAscendingOrder() {
+        List<String> actualOrder = new LoginPage()
+                .login(LOGIN, PASSWORD)
+                .sortProducts(2)
+                .getProductAttributes("prices");
+
+        List<String> ascOrder = actualOrder
+                .stream()
+                .mapToDouble(Double::parseDouble)
+                .sorted()
+                .mapToObj(String::valueOf)
+                .collect(Collectors.toList());
+
+        assertEquals(actualOrder, ascOrder, "Товары не отсортированы по цене");
+    }
+
+    @Test(description = "Проверка сортировки товаров по цене в обратном порядке", priority = 2,
+            testName = "Сортировка товаров по цене в обратном порядке")
+    public void sortPriceDescendingOrder() {
+        List<String> actualOrder = new LoginPage()
+                .login(LOGIN, PASSWORD)
+                .sortProducts(3)
+                .getProductAttributes("prices");
+
+        List<String> descOrder =  actualOrder
+                .stream()
+                .mapToDouble(Double::parseDouble)
+                .boxed()
+                .sorted(Comparator.reverseOrder())
+                .map(String::valueOf)
+                .collect(Collectors.toList());
+
+
+        assertEquals(actualOrder, descOrder, "Товары не отсортированы по цене в обратном порядке");
     }
 
 }
